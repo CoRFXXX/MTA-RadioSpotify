@@ -36,30 +36,28 @@ lib_xml       ={
                         Musisz zrobic podpiecie pod jeden child "playlist" i tam dac tablice nowych playlist wraz z id i trackami na nim
                     ]]
                     ["playlist"] = {
-                        attributes = {
-                            {"id", "Playlista1"};
-                        };
-                        configValues = {
-                            xmlSubChild = { 
-                                ["track1"] = {configValues={
-                                    {"trackTitle", "string trackTitle"};
-                                    {"trackArtist", "string trackArtist"};
-                                    {"trackLink", "string trackDownloadLink"};
-                                }};
-                            };
-                        };
-                    };
-                    ["playlist"] = {
-                        attributes = {
-                            {"id", "Bedoes"};
-                        };
-                        configValues = {
-                            xmlSubChild = { 
-                                ["track1"] = {configValues={
-                                    {"trackTitle", "string trackTitle"};
-                                    {"trackArtist", "string trackArtist"};
-                                    {"trackLink", "string trackDownloadLink"};
-                                }};
+                        lists = {
+                            { -- new Playlist
+                                attributes = {
+                                    {"id", "Playlista1"};
+                                };
+                                configValues = {
+                                    xmlSubChild = { 
+                                        ["track1"] = {configValues={
+                                            {"trackTitle", "Otsochodzi - Nie nie"};
+                                            {"trackArtist", "Otsochodzi"};
+                                            {"trackLink", "CoRFX"};
+                                            {"trackFavourite", "false"};
+                                        }};
+                                        ["track2"] = {configValues={
+                                            {"trackTitle", "Bedoes - 1998"};
+                                            {"trackArtist", "Bedoes"};
+                                            {"trackLink", "CoRFX"};
+                                            {"trackFavourite", "false"};
+                                            
+                                        }};
+                                    };
+                                };
                             };
                         };
                     };
@@ -145,7 +143,7 @@ function lib_xml.nodeValue(xmlChild, _xmlNodes)
     return true;
 end
 
-function lib_xml.nodeChildren(xmlChild, _xmlNodes)
+function lib_xml.nodeChildren(xmlChild, _xmlNodes, customVar)
     if(xmlChild)then 
         --[[
             _xmlNodes = {
@@ -154,6 +152,7 @@ function lib_xml.nodeChildren(xmlChild, _xmlNodes)
                         -- for loop
                     };
                     {"childData", "childData"}
+                    ...
                 }, attributes = {
                     {"attName", "value"};
                     ...
@@ -164,26 +163,30 @@ function lib_xml.nodeChildren(xmlChild, _xmlNodes)
         local playlistNextID = 0;
         for index, value in pairs(_xmlNodes) do 
             if(index and value)then 
-                outputDebugString("index = "..index..", created | #Att: ");
+                if(tonumber(index))then 
+                    if(customVar and customVar.index)then index = customVar.index end;
+                end
+                -- outputDebugString("index = "..index.." | customVar.index = "..(customVar and customVar.index or "false"));
                 local findId = 0;
                 if(index == "playlist")then 
                     findId = playlistNextID;
                 end
                 local findThatChild = xmlFindChild(xmlChild, index, findId);
                 local id = lib_xml.getXMLSavedAttributes({xmlChild = findThatChild, attribute = "id"});
-                if(not findThatChild or (findThatChild and id))then 
-                    lib_xml.nodeValue(xmlChild, {{index, false, attributes = value.attributes}});
-                    findThatChild = xmlFindChild(xmlChild, index, findId);
-                    if(findThatChild)then
-                        if(value.configValues)then 
+                -- if(not findThatChild or (findThatChild and id))then 
+                    if(value.configValues)then 
+                        lib_xml.nodeValue(xmlChild, {{index, false, attributes = value.attributes}});
+                        findThatChild = xmlFindChild(xmlChild, index, findId);
+                        if(findThatChild)then
                             if(value.configValues.xmlSubChild)then 
-                                lib_xml.nodeChildren(findThatChild, value.configValues.xmlSubChild);
+                                outputDebugString("Created index = "..index);
+                                lib_xml.nodeChildren(findThatChild, value.configValues.xmlSubChild, customVar);
                             end
                             lib_xml.nodeValue(findThatChild, value.configValues);
                         end
+                        playlistNextID = playlistNextID + 1;
                     end
-                    playlistNextID = playlistNextID + 1;
-                end
+                -- end
             end
         end
     end
